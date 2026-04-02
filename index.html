@@ -131,7 +131,7 @@ tr:hover { background: #f8fafc; }
 <body>
 
 <!-- NAV -->
-<div class="nav">
+<div class="nav" id="main-nav">
   <button class="active" onclick="showPage('admin')">管理画面</button>
   <button onclick="showPage('exam')">受験画面</button>
   <button onclick="showPage('results')">集計結果</button>
@@ -1020,7 +1020,19 @@ function escapeHtml(str) {
 
 function checkHash() {
   var hash = window.location.hash.replace('#', '');
-  if (hash === 'exam') showPage('exam');
+  if (hash === 'exam') {
+    enterExamMode();
+  }
+}
+
+// 受験者モード：管理画面・集計タブを非表示にする
+function enterExamMode() {
+  document.getElementById('main-nav').classList.add('hidden');
+  document.getElementById('page-admin').classList.remove('active');
+  document.getElementById('page-admin').style.display = 'none';
+  document.getElementById('page-results').style.display = 'none';
+  document.getElementById('page-exam').classList.add('active');
+  loadExamFromServer();
 }
 
 // INIT
