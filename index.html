@@ -22,17 +22,14 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-/* ===== NAV TABS ===== */
 .nav { display: flex; background: var(--card); border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 100; }
 .nav button { flex: 1; padding: 14px 8px; border: none; background: none; font-size: 15px; font-weight: 600; color: var(--text-light); cursor: pointer; transition: all .2s; border-bottom: 3px solid transparent; }
 .nav button.active { color: var(--primary); border-bottom-color: var(--primary); background: #eff6ff; }
 .nav button:hover:not(.active) { background: #f1f5f9; }
 
-/* ===== PAGES ===== */
 .page { display: none; max-width: 800px; margin: 0 auto; padding: 20px; }
 .page.active { display: block; }
 
-/* ===== COMMON ===== */
 h1 { font-size: 22px; margin-bottom: 4px; }
 h2 { font-size: 18px; margin-bottom: 16px; color: var(--text); }
 .subtitle { color: var(--text-light); font-size: 14px; margin-bottom: 24px; }
@@ -84,11 +81,9 @@ textarea { resize: vertical; min-height: 60px; }
 .empty-state { text-align: center; padding: 40px 20px; color: var(--text-light); }
 .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
 
-/* ===== QR ===== */
 #qr-container { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px; }
 #qr-code { background: #fff; padding: 16px; border-radius: 12px; border: 2px solid var(--border); }
 
-/* ===== EXAM PAGE ===== */
 .exam-header { background: linear-gradient(135deg, #2563eb, #7c3aed); color: #fff; border-radius: var(--radius); padding: 24px; margin-bottom: 20px; text-align: center; }
 .exam-header h1 { color: #fff; font-size: 24px; }
 .progress-bar { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin-top: 16px; }
@@ -100,7 +95,6 @@ textarea { resize: vertical; min-height: 60px; }
 .choice-label input[type="radio"] { accent-color: var(--primary); width: 18px; height: 18px; }
 .choice-label.selected { border-color: var(--primary); background: #eff6ff; }
 
-/* ===== RESULTS TABLE ===== */
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
@@ -119,10 +113,13 @@ tr:hover { background: #f8fafc; }
 
 .hidden { display: none !important; }
 
-/* ===== EXAM COMPLETE ===== */
 .complete-screen { text-align: center; padding: 60px 20px; }
 .complete-icon { font-size: 64px; margin-bottom: 16px; }
 .complete-screen h2 { font-size: 24px; margin-bottom: 8px; }
+
+.loading { text-align: center; padding: 40px; color: var(--text-light); }
+.spinner { display: inline-block; width: 36px; height: 36px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; margin-bottom: 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 600px) {
   .form-row { flex-direction: column; gap: 12px; }
@@ -133,7 +130,7 @@ tr:hover { background: #f8fafc; }
 </head>
 <body>
 
-<!-- ===== NAVIGATION ===== -->
+<!-- NAV -->
 <div class="nav">
   <button class="active" onclick="showPage('admin')">管理画面</button>
   <button onclick="showPage('exam')">受験画面</button>
@@ -145,7 +142,6 @@ tr:hover { background: #f8fafc; }
   <h1>試験管理</h1>
   <p class="subtitle">試験の設定・問題の登録・QRコードの生成</p>
 
-  <!-- 基本設定 -->
   <div class="card">
     <h3>基本設定</h3>
     <div class="form-group">
@@ -179,12 +175,22 @@ tr:hover { background: #f8fafc; }
     <div id="question-list"></div>
   </div>
 
+  <!-- サーバーに保存 -->
+  <div class="card" style="border: 2px solid var(--success); background: #f0fdf4;">
+    <h3>問題をサーバーに公開</h3>
+    <p style="font-size:14px;color:var(--text);margin-bottom:12px;">
+      受験者がスマホから問題にアクセスできるよう、問題データをサーバーに保存します。<br>
+      <strong>問題を追加・変更したら、必ずこのボタンを押してください。</strong>
+    </p>
+    <button class="btn btn-success" onclick="publishQuestions()" id="publish-btn">問題をサーバーに保存する</button>
+    <span id="publish-status" style="margin-left:12px;font-size:14px;"></span>
+  </div>
+
   <!-- QRコード -->
   <div class="card">
     <h3>QRコード生成</h3>
     <p style="font-size:14px;color:var(--text-light);margin-bottom:12px;">
-      このHTMLファイルをWebサーバーに置き、そのURLからQRコードを生成してください。<br>
-      ローカルテスト時は下のボタンで現在のURLのQRコードを表示します。
+      受験者に配布するQRコードを生成します。スマホで読み取ると受験画面が開きます。
     </p>
     <button class="btn btn-outline" onclick="generateQR()">QRコードを生成</button>
     <div id="qr-container" class="hidden">
@@ -193,7 +199,7 @@ tr:hover { background: #f8fafc; }
     </div>
   </div>
 
-  <!-- GASセットアップガイド -->
+  <!-- GASガイド -->
   <div class="card">
     <h3>Google Apps Script セットアップガイド</h3>
     <div style="font-size:14px;line-height:1.8;color:var(--text);">
@@ -207,8 +213,26 @@ tr:hover { background: #f8fafc; }
 
 <!-- ========== 受験画面 ========== -->
 <div id="page-exam" class="page">
+  <!-- ローディング -->
+  <div id="exam-loading" class="hidden">
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>試験データを読み込んでいます...</p>
+    </div>
+  </div>
+
+  <!-- エラー -->
+  <div id="exam-error" class="hidden">
+    <div class="card" style="text-align:center;padding:40px;">
+      <div style="font-size:48px;margin-bottom:12px;">&#9888;&#65039;</div>
+      <h2>試験データの読み込みに失敗しました</h2>
+      <p style="color:var(--text-light);margin-top:8px;" id="exam-error-msg"></p>
+      <button class="btn btn-primary" onclick="loadExamFromServer()" style="margin-top:16px;">再読み込み</button>
+    </div>
+  </div>
+
   <!-- 受験開始前 -->
-  <div id="exam-start">
+  <div id="exam-start" class="hidden">
     <div class="exam-header">
       <h1 id="exam-title-display">確認テスト</h1>
       <p style="opacity:.85;margin-top:4px;" id="exam-info-display"></p>
@@ -280,19 +304,17 @@ tr:hover { background: #f8fafc; }
       <div class="empty-state">
         <div class="icon">&#128203;</div>
         <p>まだ回答データがありません</p>
-        <p style="font-size:13px;margin-top:4px;">受験者が解答を送信すると、ここに表示されます</p>
       </div>
     </div>
   </div>
 
-  <!-- 問題別正答率 -->
-  <div class="card" id="per-question-stats" class="hidden">
+  <div class="card" id="per-question-stats">
     <h3>問題別 正答率</h3>
     <div id="per-question-chart"></div>
   </div>
 </div>
 
-<!-- ========== 問題追加/編集モーダル ========== -->
+<!-- 問題モーダル -->
 <div id="question-modal" class="modal-overlay hidden" onclick="event.target===this&&closeQuestionModal()">
   <div class="modal">
     <h2 id="modal-title">問題を追加</h2>
@@ -336,16 +358,18 @@ tr:hover { background: #f8fafc; }
 
 <script>
 // ========== STATE ==========
-let state = {
+var state = {
   settings: { title: '確認テスト', timeLimit: 0, passScore: 0, gasUrl: '' },
   questions: [],
   submissions: []
 };
 
-// Load from localStorage
+// 受験者側の問題データ（サーバーから取得）
+var examData = { settings: {}, questions: [] };
+
 function loadState() {
   try {
-    const saved = localStorage.getItem('examAppState');
+    var saved = localStorage.getItem('examAppState');
     if (saved) state = JSON.parse(saved);
   } catch(e) {}
   applySettings();
@@ -358,12 +382,12 @@ function saveState() {
 
 // ========== PAGE NAVIGATION ==========
 function showPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.nav button').forEach(function(b) { b.classList.remove('active'); });
   document.getElementById('page-' + name).classList.add('active');
   document.querySelectorAll('.nav button')[['admin','exam','results'].indexOf(name)].classList.add('active');
 
-  if (name === 'exam') { resetExam(); prepareExam(); }
+  if (name === 'exam') { resetExam(); loadExamFromServer(); }
   if (name === 'results') renderResults();
 }
 
@@ -384,27 +408,143 @@ function applySettings() {
   document.getElementById('gas-url').value = state.settings.gasUrl;
 }
 
+// ========== PUBLISH QUESTIONS TO SERVER ==========
+function publishQuestions() {
+  if (!state.settings.gasUrl) {
+    alert('Google Apps Script URLを先に設定してください');
+    return;
+  }
+  if (state.questions.length === 0) {
+    alert('問題が登録されていません');
+    return;
+  }
+
+  var btn = document.getElementById('publish-btn');
+  var status = document.getElementById('publish-status');
+  btn.disabled = true;
+  btn.textContent = '保存中...';
+  status.textContent = '';
+
+  var payload = {
+    action: 'saveQuestions',
+    settings: {
+      title: state.settings.title,
+      timeLimit: state.settings.timeLimit,
+      passScore: state.settings.passScore
+    },
+    questions: state.questions
+  };
+
+  fetch(state.settings.gasUrl, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(function() {
+    btn.disabled = false;
+    btn.textContent = '問題をサーバーに保存する';
+    status.innerHTML = '<span style="color:var(--success);font-weight:600;">&#10003; 保存しました！受験者がアクセスできます。</span>';
+  }).catch(function(e) {
+    btn.disabled = false;
+    btn.textContent = '問題をサーバーに保存する';
+    status.innerHTML = '<span style="color:var(--danger);">保存に失敗しました。URLを確認してください。</span>';
+  });
+}
+
+// ========== LOAD EXAM FROM SERVER ==========
+function loadExamFromServer() {
+  var gasUrl = state.settings.gasUrl;
+
+  // URLパラメータからGAS URLを取得（受験者用）
+  var urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('gas')) {
+    gasUrl = decodeURIComponent(urlParams.get('gas'));
+  }
+
+  // ローカルの問題がある場合はそれを使う（管理者が同じブラウザで確認する場合）
+  if (!gasUrl && state.questions.length > 0) {
+    examData.settings = state.settings;
+    examData.questions = state.questions;
+    showExamStart();
+    return;
+  }
+
+  if (!gasUrl) {
+    document.getElementById('exam-loading').classList.add('hidden');
+    document.getElementById('exam-error').classList.remove('hidden');
+    document.getElementById('exam-error-msg').textContent = 'Google Apps Script URLが設定されていません。管理画面で設定してください。';
+    return;
+  }
+
+  // サーバーから問題を取得
+  document.getElementById('exam-start').classList.add('hidden');
+  document.getElementById('exam-error').classList.add('hidden');
+  document.getElementById('exam-loading').classList.remove('hidden');
+
+  fetch(gasUrl + '?action=getQuestions')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      document.getElementById('exam-loading').classList.add('hidden');
+      if (data.questions && data.questions.length > 0) {
+        examData.settings = data.settings || {};
+        examData.questions = data.questions;
+        // GAS URLを受験者側でも保持
+        if (!state.settings.gasUrl) state.settings.gasUrl = gasUrl;
+        showExamStart();
+      } else {
+        document.getElementById('exam-error').classList.remove('hidden');
+        document.getElementById('exam-error-msg').textContent = '問題がまだ登録されていません。管理者に連絡してください。';
+      }
+    })
+    .catch(function(e) {
+      document.getElementById('exam-loading').classList.add('hidden');
+      // フォールバック: ローカルの問題を使う
+      if (state.questions.length > 0) {
+        examData.settings = state.settings;
+        examData.questions = state.questions;
+        showExamStart();
+      } else {
+        document.getElementById('exam-error').classList.remove('hidden');
+        document.getElementById('exam-error-msg').textContent = '通信エラーが発生しました。インターネット接続を確認してください。';
+      }
+    });
+}
+
+function showExamStart() {
+  document.getElementById('exam-loading').classList.add('hidden');
+  document.getElementById('exam-error').classList.add('hidden');
+  document.getElementById('exam-start').classList.remove('hidden');
+
+  var s = examData.settings;
+  document.getElementById('exam-title-display').textContent = s.title || '確認テスト';
+  var info = [];
+  if (examData.questions.length) info.push(examData.questions.length + '問');
+  if (s.timeLimit > 0) info.push('制限時間 ' + s.timeLimit + '分');
+  var totalPts = examData.questions.reduce(function(sum, q) { return sum + (q.points||1); }, 0);
+  if (totalPts) info.push('満点 ' + totalPts + '点');
+  document.getElementById('exam-info-display').textContent = info.join(' ・ ');
+}
+
 // ========== QR CODE ==========
 function generateQR() {
-  const container = document.getElementById('qr-container');
-  const qrEl = document.getElementById('qr-code');
+  var container = document.getElementById('qr-container');
+  var qrEl = document.getElementById('qr-code');
   container.classList.remove('hidden');
   qrEl.innerHTML = '';
 
-  // Build URL with exam page hash
-  let url = window.location.href.split('#')[0] + '#exam';
+  var url = window.location.href.split('#')[0].split('?')[0] + '#exam';
   new QRCode(qrEl, { text: url, width: 200, height: 200, colorDark: '#1e293b', colorLight: '#ffffff' });
   document.getElementById('qr-url-display').textContent = url;
 }
 
 // ========== QUESTION MANAGEMENT ==========
 function openQuestionModal(editIndex) {
-  const isEdit = editIndex !== undefined && editIndex >= 0;
+  var isEdit = editIndex !== undefined && editIndex >= 0;
   document.getElementById('modal-title').textContent = isEdit ? '問題を編集' : '問題を追加';
   document.getElementById('q-edit-index').value = isEdit ? editIndex : -1;
 
   if (isEdit) {
-    const q = state.questions[editIndex];
+    var q = state.questions[editIndex];
     document.getElementById('q-text').value = q.text;
     document.getElementById('q-type').value = q.type;
     document.getElementById('q-points').value = q.points || 1;
@@ -431,7 +571,7 @@ function closeQuestionModal() {
 }
 
 function toggleOptions() {
-  const type = document.getElementById('q-type').value;
+  var type = document.getElementById('q-type').value;
   document.getElementById('options-section').classList.toggle('hidden', type !== 'choice');
   document.getElementById('text-answer-section').classList.toggle('hidden', type !== 'text');
   if (type === 'choice' && document.getElementById('options-container').children.length === 0) {
@@ -440,42 +580,42 @@ function toggleOptions() {
 }
 
 function renderOptionInputs(options) {
-  const container = document.getElementById('options-container');
+  var container = document.getElementById('options-container');
   container.innerHTML = '';
-  (options || []).forEach((opt, i) => {
-    const row = document.createElement('div');
+  (options || []).forEach(function(opt, i) {
+    var row = document.createElement('div');
     row.className = 'option-row';
-    row.innerHTML = `<span style="font-size:13px;font-weight:600;width:20px;">${i+1}.</span>
-      <input type="text" value="${escapeHtml(opt)}" placeholder="選択肢${i+1}">
-      <button class="remove-opt" onclick="this.parentElement.remove()" title="削除">&times;</button>`;
+    row.innerHTML = '<span style="font-size:13px;font-weight:600;width:20px;">' + (i+1) + '.</span>' +
+      '<input type="text" value="' + escapeHtml(opt) + '" placeholder="選択肢' + (i+1) + '">' +
+      '<button class="remove-opt" onclick="this.parentElement.remove()" title="削除">&times;</button>';
     container.appendChild(row);
   });
 }
 
 function addOption() {
-  const container = document.getElementById('options-container');
-  const n = container.children.length + 1;
-  const row = document.createElement('div');
+  var container = document.getElementById('options-container');
+  var n = container.children.length + 1;
+  var row = document.createElement('div');
   row.className = 'option-row';
-  row.innerHTML = `<span style="font-size:13px;font-weight:600;width:20px;">${n}.</span>
-    <input type="text" value="" placeholder="選択肢${n}">
-    <button class="remove-opt" onclick="this.parentElement.remove()" title="削除">&times;</button>`;
+  row.innerHTML = '<span style="font-size:13px;font-weight:600;width:20px;">' + n + '.</span>' +
+    '<input type="text" value="" placeholder="選択肢' + n + '">' +
+    '<button class="remove-opt" onclick="this.parentElement.remove()" title="削除">&times;</button>';
   container.appendChild(row);
 }
 
 function saveQuestion() {
-  const text = document.getElementById('q-text').value.trim();
+  var text = document.getElementById('q-text').value.trim();
   if (!text) { alert('問題文を入力してください'); return; }
 
-  const type = document.getElementById('q-type').value;
-  const points = parseInt(document.getElementById('q-points').value) || 1;
-  const editIndex = parseInt(document.getElementById('q-edit-index').value);
+  var type = document.getElementById('q-type').value;
+  var points = parseInt(document.getElementById('q-points').value) || 1;
+  var editIndex = parseInt(document.getElementById('q-edit-index').value);
 
-  let q = { text, type, points };
+  var q = { text: text, type: type, points: points };
 
   if (type === 'choice') {
-    const optEls = document.getElementById('options-container').querySelectorAll('input');
-    const options = Array.from(optEls).map(el => el.value.trim()).filter(v => v);
+    var optEls = document.getElementById('options-container').querySelectorAll('input');
+    var options = Array.from(optEls).map(function(el) { return el.value.trim(); }).filter(function(v) { return v; });
     if (options.length < 2) { alert('選択肢を2つ以上入力してください'); return; }
     q.options = options;
     q.answer = parseInt(document.getElementById('q-answer').value) || 1;
@@ -495,22 +635,24 @@ function saveQuestion() {
 }
 
 function deleteQuestion(index) {
-  if (!confirm(`問題${index+1}を削除しますか？`)) return;
+  if (!confirm('問題' + (index+1) + 'を削除しますか？')) return;
   state.questions.splice(index, 1);
   saveState();
   renderQuestions();
 }
 
 function moveQuestion(index, dir) {
-  const newIndex = index + dir;
+  var newIndex = index + dir;
   if (newIndex < 0 || newIndex >= state.questions.length) return;
-  [state.questions[index], state.questions[newIndex]] = [state.questions[newIndex], state.questions[index]];
+  var temp = state.questions[index];
+  state.questions[index] = state.questions[newIndex];
+  state.questions[newIndex] = temp;
   saveState();
   renderQuestions();
 }
 
 function renderQuestions() {
-  const list = document.getElementById('question-list');
+  var list = document.getElementById('question-list');
   document.getElementById('q-count').textContent = state.questions.length;
 
   if (state.questions.length === 0) {
@@ -518,52 +660,50 @@ function renderQuestions() {
     return;
   }
 
-  list.innerHTML = state.questions.map((q, i) => `
-    <div class="card question-item">
-      <div class="q-actions">
-        <button class="btn btn-outline btn-sm" onclick="moveQuestion(${i},-1)" ${i===0?'disabled':''} title="上へ">&#9650;</button>
-        <button class="btn btn-outline btn-sm" onclick="moveQuestion(${i},1)" ${i===state.questions.length-1?'disabled':''} title="下へ">&#9660;</button>
-        <button class="btn btn-outline btn-sm" onclick="openQuestionModal(${i})">編集</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteQuestion(${i})">削除</button>
-      </div>
-      <div class="q-num">問${i+1} ・ <span class="badge ${q.type==='choice'?'badge-blue':'badge-orange'}">${q.type==='choice'?'選択式':'記述式'}</span> ・ 配点: ${q.points}点</div>
-      <div class="q-text">${escapeHtml(q.text)}</div>
-      ${q.type === 'choice' ? '<div style="font-size:13px;color:var(--text-light);">選択肢: ' + q.options.map((o,j) => `<span style="${j+1===q.answer?'color:var(--success);font-weight:600':''}"> ${j+1}.${escapeHtml(o)}</span>`).join(' ') + '</div>' : ''}
-      ${q.type === 'text' && q.modelAnswer ? '<div style="font-size:13px;color:var(--text-light);">模範解答: ' + escapeHtml(q.modelAnswer) + '</div>' : ''}
-    </div>
-  `).join('');
+  list.innerHTML = state.questions.map(function(q, i) {
+    var html = '<div class="card question-item">' +
+      '<div class="q-actions">' +
+      '<button class="btn btn-outline btn-sm" onclick="moveQuestion(' + i + ',-1)"' + (i===0?' disabled':'') + ' title="上へ">&#9650;</button>' +
+      '<button class="btn btn-outline btn-sm" onclick="moveQuestion(' + i + ',1)"' + (i===state.questions.length-1?' disabled':'') + ' title="下へ">&#9660;</button>' +
+      '<button class="btn btn-outline btn-sm" onclick="openQuestionModal(' + i + ')">編集</button>' +
+      '<button class="btn btn-danger btn-sm" onclick="deleteQuestion(' + i + ')">削除</button>' +
+      '</div>' +
+      '<div class="q-num">問' + (i+1) + ' ・ <span class="badge ' + (q.type==='choice'?'badge-blue':'badge-orange') + '">' + (q.type==='choice'?'選択式':'記述式') + '</span> ・ 配点: ' + q.points + '点</div>' +
+      '<div class="q-text">' + escapeHtml(q.text) + '</div>';
+
+    if (q.type === 'choice') {
+      html += '<div style="font-size:13px;color:var(--text-light);">選択肢: ' +
+        q.options.map(function(o, j) {
+          return '<span style="' + (j+1===q.answer?'color:var(--success);font-weight:600':'') + '"> ' + (j+1) + '.' + escapeHtml(o) + '</span>';
+        }).join(' ') + '</div>';
+    }
+    if (q.type === 'text' && q.modelAnswer) {
+      html += '<div style="font-size:13px;color:var(--text-light);">模範解答: ' + escapeHtml(q.modelAnswer) + '</div>';
+    }
+    html += '</div>';
+    return html;
+  }).join('');
 }
 
 // ========== EXAM ==========
-let timerInterval = null;
-
-function prepareExam() {
-  document.getElementById('exam-title-display').textContent = state.settings.title;
-  const info = [];
-  if (state.questions.length) info.push(state.questions.length + '問');
-  if (state.settings.timeLimit > 0) info.push('制限時間 ' + state.settings.timeLimit + '分');
-  const totalPts = state.questions.reduce((s,q) => s + (q.points||1), 0);
-  if (totalPts) info.push('満点 ' + totalPts + '点');
-  document.getElementById('exam-info-display').textContent = info.join(' ・ ');
-}
+var timerInterval = null;
 
 function startExam() {
-  const name = document.getElementById('examinee-name').value.trim();
+  var name = document.getElementById('examinee-name').value.trim();
   if (!name) { alert('お名前を入力してください'); return; }
-  if (state.questions.length === 0) { alert('問題が登録されていません'); return; }
+  if (examData.questions.length === 0) { alert('問題が登録されていません'); return; }
 
   document.getElementById('exam-start').classList.add('hidden');
   document.getElementById('exam-body').classList.remove('hidden');
-
   renderExamQuestions();
 
-  // Timer
-  if (state.settings.timeLimit > 0) {
-    let remaining = state.settings.timeLimit * 60;
-    const timerEl = document.getElementById('exam-timer');
+  var tl = examData.settings.timeLimit || 0;
+  if (tl > 0) {
+    var remaining = tl * 60;
+    var timerEl = document.getElementById('exam-timer');
     timerEl.classList.remove('hidden');
     updateTimer(timerEl, remaining);
-    timerInterval = setInterval(() => {
+    timerInterval = setInterval(function() {
       remaining--;
       updateTimer(timerEl, remaining);
       if (remaining <= 0) {
@@ -576,112 +716,113 @@ function startExam() {
 }
 
 function updateTimer(el, sec) {
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  el.textContent = `残り ${m}:${String(s).padStart(2,'0')}`;
+  var m = Math.floor(sec / 60);
+  var s = sec % 60;
+  el.textContent = '残り ' + m + ':' + String(s).padStart(2, '0');
   if (sec <= 60) el.style.color = 'var(--danger)';
 }
 
 function renderExamQuestions() {
-  const container = document.getElementById('exam-questions');
-  document.getElementById('exam-progress-text').textContent = `全${state.questions.length}問`;
+  var container = document.getElementById('exam-questions');
+  document.getElementById('exam-progress-text').textContent = '全' + examData.questions.length + '問';
 
-  container.innerHTML = state.questions.map((q, i) => {
-    let answerHtml = '';
+  container.innerHTML = examData.questions.map(function(q, i) {
+    var answerHtml = '';
     if (q.type === 'choice') {
-      answerHtml = '<div class="choice-group">' + q.options.map((opt, j) =>
-        `<label class="choice-label" onclick="selectChoice(this)">
-          <input type="radio" name="q${i}" value="${j+1}">
-          <span>${escapeHtml(opt)}</span>
-        </label>`
-      ).join('') + '</div>';
+      answerHtml = '<div class="choice-group">' + q.options.map(function(opt, j) {
+        return '<label class="choice-label" onclick="selectChoice(this)">' +
+          '<input type="radio" name="q' + i + '" value="' + (j+1) + '">' +
+          '<span>' + escapeHtml(opt) + '</span></label>';
+      }).join('') + '</div>';
     } else {
-      answerHtml = `<textarea id="ans-${i}" rows="3" placeholder="回答を入力してください" style="width:100%;"></textarea>`;
+      answerHtml = '<textarea id="ans-' + i + '" rows="3" placeholder="回答を入力してください" style="width:100%;"></textarea>';
     }
 
-    return `<div class="card" style="border-left:4px solid var(--primary);">
-      <div class="q-num">問${i+1}（${q.points}点）</div>
-      <div class="q-text" style="margin-bottom:12px;">${escapeHtml(q.text)}</div>
-      ${answerHtml}
-    </div>`;
+    return '<div class="card" style="border-left:4px solid var(--primary);">' +
+      '<div class="q-num">問' + (i+1) + '（' + q.points + '点）</div>' +
+      '<div class="q-text" style="margin-bottom:12px;">' + escapeHtml(q.text) + '</div>' +
+      answerHtml + '</div>';
   }).join('');
 
   updateProgress();
 }
 
 function selectChoice(label) {
-  label.closest('.choice-group').querySelectorAll('.choice-label').forEach(l => l.classList.remove('selected'));
+  label.closest('.choice-group').querySelectorAll('.choice-label').forEach(function(l) { l.classList.remove('selected'); });
   label.classList.add('selected');
   label.querySelector('input').checked = true;
   updateProgress();
 }
 
 function updateProgress() {
-  let answered = 0;
-  state.questions.forEach((q, i) => {
+  var answered = 0;
+  examData.questions.forEach(function(q, i) {
     if (q.type === 'choice') {
-      if (document.querySelector(`input[name="q${i}"]:checked`)) answered++;
+      if (document.querySelector('input[name="q' + i + '"]:checked')) answered++;
     } else {
-      const ta = document.getElementById(`ans-${i}`);
+      var ta = document.getElementById('ans-' + i);
       if (ta && ta.value.trim()) answered++;
     }
   });
-  const pct = state.questions.length ? (answered / state.questions.length * 100) : 0;
+  var pct = examData.questions.length ? (answered / examData.questions.length * 100) : 0;
   document.getElementById('exam-progress-bar').style.width = pct + '%';
-  document.getElementById('exam-progress-text').textContent = `${answered} / ${state.questions.length} 問回答済み`;
+  document.getElementById('exam-progress-text').textContent = answered + ' / ' + examData.questions.length + ' 問回答済み';
 }
 
-async function submitExam() {
+function submitExam() {
   if (timerInterval) clearInterval(timerInterval);
 
-  const name = document.getElementById('examinee-name').value.trim();
-  const id = document.getElementById('examinee-id').value.trim();
-  const answers = [];
-  let score = 0;
-  let totalPoints = 0;
+  var name = document.getElementById('examinee-name').value.trim();
+  var id = document.getElementById('examinee-id').value.trim();
+  var answers = [];
+  var score = 0;
+  var totalPoints = 0;
 
-  state.questions.forEach((q, i) => {
-    let ans = '';
-    let correct = false;
+  examData.questions.forEach(function(q, i) {
+    var ans = '';
+    var correct = false;
     totalPoints += (q.points || 1);
 
     if (q.type === 'choice') {
-      const checked = document.querySelector(`input[name="q${i}"]:checked`);
+      var checked = document.querySelector('input[name="q' + i + '"]:checked');
       ans = checked ? checked.value : '';
       correct = ans && parseInt(ans) === q.answer;
     } else {
-      const ta = document.getElementById(`ans-${i}`);
+      var ta = document.getElementById('ans-' + i);
       ans = ta ? ta.value.trim() : '';
-      // 記述式はexact matchで判定（模範解答がある場合）
       if (q.modelAnswer) correct = ans === q.modelAnswer;
     }
     if (correct) score += (q.points || 1);
-    answers.push({ questionIndex: i+1, questionText: q.text, type: q.type, answer: ans, correct });
+    answers.push({ questionIndex: i+1, questionText: q.text, type: q.type, answer: ans, correct: correct });
   });
 
-  const submission = {
+  var submission = {
     timestamp: new Date().toISOString(),
-    name, id, answers, score, totalPoints,
+    name: name, id: id, answers: answers, score: score, totalPoints: totalPoints,
     percentage: totalPoints > 0 ? Math.round(score / totalPoints * 100) : 0
   };
 
-  // Save locally
   state.submissions.push(submission);
   saveState();
 
   // Send to Google Sheets
-  if (state.settings.gasUrl) {
+  var gasUrl = state.settings.gasUrl;
+  var urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('gas')) gasUrl = decodeURIComponent(urlParams.get('gas'));
+
+  if (gasUrl) {
     try {
-      const payload = {
+      var payload = {
+        action: 'submit',
         name: submission.name,
         id: submission.id,
         timestamp: submission.timestamp,
         score: submission.score,
         totalPoints: submission.totalPoints,
         percentage: submission.percentage,
-        answers: submission.answers.map(a => a.answer).join('|||')
+        answers: submission.answers.map(function(a) { return a.answer; }).join('|||')
       };
-      await fetch(state.settings.gasUrl, {
+      fetch(gasUrl, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
@@ -692,172 +833,161 @@ async function submitExam() {
     }
   }
 
-  // Show completion
   document.getElementById('exam-body').classList.add('hidden');
   document.getElementById('exam-complete').classList.remove('hidden');
 
-  // Show score if choice questions exist
-  const hasChoiceQ = state.questions.some(q => q.type === 'choice');
+  var hasChoiceQ = examData.questions.some(function(q) { return q.type === 'choice'; });
   if (hasChoiceQ) {
     document.getElementById('score-display').classList.remove('hidden');
-    document.getElementById('score-value').textContent = `${submission.score} / ${submission.totalPoints} (${submission.percentage}%)`;
+    document.getElementById('score-value').textContent = submission.score + ' / ' + submission.totalPoints + ' (' + submission.percentage + '%)';
 
-    if (state.settings.passScore > 0) {
-      const passed = submission.percentage >= state.settings.passScore;
+    var ps = examData.settings.passScore || 0;
+    if (ps > 0) {
+      var passed = submission.percentage >= ps;
       document.getElementById('complete-message').textContent =
-        passed ? `合格おめでとうございます！（合格基準: ${state.settings.passScore}%）`
-               : `残念ですが不合格です。（合格基準: ${state.settings.passScore}%）`;
+        passed ? '合格おめでとうございます！（合格基準: ' + ps + '%）'
+               : '残念ですが不合格です。（合格基準: ' + ps + '%）';
     }
   }
 }
 
 function resetExam() {
-  document.getElementById('exam-start').classList.remove('hidden');
+  document.getElementById('exam-start').classList.add('hidden');
   document.getElementById('exam-body').classList.add('hidden');
   document.getElementById('exam-complete').classList.add('hidden');
+  document.getElementById('exam-loading').classList.add('hidden');
+  document.getElementById('exam-error').classList.add('hidden');
   document.getElementById('score-display').classList.add('hidden');
   document.getElementById('examinee-name').value = '';
   document.getElementById('examinee-id').value = '';
   if (timerInterval) clearInterval(timerInterval);
-  prepareExam();
 }
 
 // ========== RESULTS ==========
 function renderResults() {
-  const subs = state.submissions;
+  var subs = state.submissions;
   document.getElementById('stat-total').textContent = subs.length;
 
   if (subs.length > 0) {
-    const percs = subs.map(s => s.percentage);
-    document.getElementById('stat-avg').textContent = Math.round(percs.reduce((a,b) => a+b, 0) / percs.length) + '%';
-    document.getElementById('stat-high').textContent = Math.max(...percs) + '%';
-    document.getElementById('stat-low').textContent = Math.min(...percs) + '%';
+    var percs = subs.map(function(s) { return s.percentage; });
+    document.getElementById('stat-avg').textContent = Math.round(percs.reduce(function(a,b) { return a+b; }, 0) / percs.length) + '%';
+    document.getElementById('stat-high').textContent = Math.max.apply(null, percs) + '%';
+    document.getElementById('stat-low').textContent = Math.min.apply(null, percs) + '%';
   }
 
-  const wrap = document.getElementById('results-table-wrap');
+  var wrap = document.getElementById('results-table-wrap');
   if (subs.length === 0) {
     wrap.innerHTML = '<div class="empty-state"><div class="icon">&#128203;</div><p>まだ回答データがありません</p></div>';
     return;
   }
 
-  let html = '<div class="table-wrap"><table><thead><tr><th>日時</th><th>名前</th><th>番号</th>';
-  state.questions.forEach((q, i) => { html += `<th>問${i+1}</th>`; });
+  var html = '<div class="table-wrap"><table><thead><tr><th>日時</th><th>名前</th><th>番号</th>';
+  state.questions.forEach(function(q, i) { html += '<th>問' + (i+1) + '</th>'; });
   html += '<th>得点</th><th>正答率</th></tr></thead><tbody>';
 
-  subs.forEach(s => {
-    const dt = new Date(s.timestamp);
-    const time = `${dt.getMonth()+1}/${dt.getDate()} ${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')}`;
-    html += `<tr><td>${time}</td><td>${escapeHtml(s.name)}</td><td>${escapeHtml(s.id||'-')}</td>`;
-    s.answers.forEach(a => {
-      const bg = a.correct ? '#dcfce7' : (a.answer ? '#fee2e2' : '#f1f5f9');
-      let display = a.answer || '-';
+  subs.forEach(function(s) {
+    var dt = new Date(s.timestamp);
+    var time = (dt.getMonth()+1) + '/' + dt.getDate() + ' ' + dt.getHours() + ':' + String(dt.getMinutes()).padStart(2,'0');
+    html += '<tr><td>' + time + '</td><td>' + escapeHtml(s.name) + '</td><td>' + escapeHtml(s.id||'-') + '</td>';
+    s.answers.forEach(function(a) {
+      var bg = a.correct ? '#dcfce7' : (a.answer ? '#fee2e2' : '#f1f5f9');
+      var display = a.answer || '-';
       if (a.type === 'choice') {
-        const q = state.questions[a.questionIndex - 1];
+        var q = state.questions[a.questionIndex - 1];
         if (q && q.options && a.answer) {
           display = q.options[parseInt(a.answer) - 1] || a.answer;
         }
       } else if (display.length > 20) {
         display = display.substring(0, 20) + '…';
       }
-      html += `<td style="background:${bg};font-size:13px;">${escapeHtml(String(display))}</td>`;
+      html += '<td style="background:' + bg + ';font-size:13px;">' + escapeHtml(String(display)) + '</td>';
     });
-    html += `<td style="font-weight:600;">${s.score}/${s.totalPoints}</td>`;
-    html += `<td><span class="badge ${s.percentage >= (state.settings.passScore||60) ? 'badge-green' : 'badge-blue'}">${s.percentage}%</span></td></tr>`;
+    html += '<td style="font-weight:600;">' + s.score + '/' + s.totalPoints + '</td>';
+    html += '<td><span class="badge ' + (s.percentage >= (state.settings.passScore||60) ? 'badge-green' : 'badge-blue') + '">' + s.percentage + '%</span></td></tr>';
   });
 
   html += '</tbody></table></div>';
   wrap.innerHTML = html;
-
-  // Per-question stats
   renderPerQuestionStats(subs);
 }
 
 function renderPerQuestionStats(subs) {
-  const container = document.getElementById('per-question-chart');
+  var container = document.getElementById('per-question-chart');
   if (!state.questions.length || !subs.length) { container.innerHTML = ''; return; }
 
-  let html = '';
-  state.questions.forEach((q, i) => {
-    const total = subs.length;
-    const correct = subs.filter(s => s.answers[i] && s.answers[i].correct).length;
-    const pct = Math.round(correct / total * 100);
-    const color = pct >= 70 ? 'var(--success)' : pct >= 40 ? 'var(--warning)' : 'var(--danger)';
+  var html = '';
+  state.questions.forEach(function(q, i) {
+    var total = subs.length;
+    var correct = subs.filter(function(s) { return s.answers[i] && s.answers[i].correct; }).length;
+    var pct = Math.round(correct / total * 100);
+    var color = pct >= 70 ? 'var(--success)' : pct >= 40 ? 'var(--warning)' : 'var(--danger)';
 
-    html += `<div style="margin-bottom:12px;">
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
-        <span>問${i+1}: ${escapeHtml(q.text.substring(0,30))}${q.text.length>30?'…':''}</span>
-        <span style="font-weight:600;">${pct}%（${correct}/${total}）</span>
-      </div>
-      <div style="height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;">
-        <div style="height:100%;width:${pct}%;background:${color};border-radius:4px;transition:width .3s;"></div>
-      </div>
-    </div>`;
+    html += '<div style="margin-bottom:12px;">' +
+      '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">' +
+      '<span>問' + (i+1) + ': ' + escapeHtml(q.text.substring(0,30)) + (q.text.length>30?'…':'') + '</span>' +
+      '<span style="font-weight:600;">' + pct + '%（' + correct + '/' + total + '）</span></div>' +
+      '<div style="height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;">' +
+      '<div style="height:100%;width:' + pct + '%;background:' + color + ';border-radius:4px;"></div></div></div>';
   });
   container.innerHTML = html;
 }
 
 function loadFromSheet() {
   if (!state.settings.gasUrl) {
-    alert('Google Apps Script URLが設定されていません。管理画面で設定してください。');
+    alert('Google Apps Script URLが設定されていません');
     return;
   }
-  const getUrl = state.settings.gasUrl + '?action=getAll';
-  fetch(getUrl)
-    .then(r => r.json())
-    .then(data => {
+  fetch(state.settings.gasUrl + '?action=getAll')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
       if (data && data.submissions) {
         state.submissions = data.submissions;
         saveState();
         renderResults();
-        alert(`${data.submissions.length}件のデータを取得しました`);
+        alert(data.submissions.length + '件のデータを取得しました');
       }
     })
-    .catch(e => {
-      alert('データの取得に失敗しました。GASのURLとデプロイ設定を確認してください。');
-      console.error(e);
+    .catch(function(e) {
+      alert('データの取得に失敗しました。');
     });
 }
 
 function exportCSV() {
   if (state.submissions.length === 0) { alert('データがありません'); return; }
-  let csv = '\ufeff日時,名前,受験番号,';
-  state.questions.forEach((q, i) => { csv += `問${i+1},`; });
+  var csv = '\ufeff日時,名前,受験番号,';
+  state.questions.forEach(function(q, i) { csv += '問' + (i+1) + ','; });
   csv += '得点,満点,正答率\n';
 
-  state.submissions.forEach(s => {
-    const dt = new Date(s.timestamp);
-    csv += `"${dt.toLocaleString('ja-JP')}","${s.name}","${s.id||''}",`;
-    s.answers.forEach(a => { csv += `"${String(a.answer).replace(/"/g,'""')}",`; });
-    csv += `${s.score},${s.totalPoints},${s.percentage}%\n`;
+  state.submissions.forEach(function(s) {
+    var dt = new Date(s.timestamp);
+    csv += '"' + dt.toLocaleString('ja-JP') + '","' + s.name + '","' + (s.id||'') + '",';
+    s.answers.forEach(function(a) { csv += '"' + String(a.answer).replace(/"/g,'""') + '",'; });
+    csv += s.score + ',' + s.totalPoints + ',' + s.percentage + '%\n';
   });
 
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a');
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `試験結果_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = '試験結果_' + new Date().toISOString().slice(0,10) + '.csv';
   a.click();
 }
 
-// ========== UTILITIES ==========
 function escapeHtml(str) {
-  const d = document.createElement('div');
+  var d = document.createElement('div');
   d.textContent = str || '';
   return d.innerHTML;
 }
 
-// Handle hash-based navigation
 function checkHash() {
-  const hash = window.location.hash.replace('#', '');
+  var hash = window.location.hash.replace('#', '');
   if (hash === 'exam') showPage('exam');
 }
 
-// ========== INIT ==========
+// INIT
 loadState();
 checkHash();
 window.addEventListener('hashchange', checkHash);
-
-// Listen for textarea changes to update progress
-document.addEventListener('input', (e) => {
+document.addEventListener('input', function(e) {
   if (e.target.tagName === 'TEXTAREA' && e.target.id && e.target.id.startsWith('ans-')) {
     updateProgress();
   }
