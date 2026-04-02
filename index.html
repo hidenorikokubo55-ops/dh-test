@@ -435,20 +435,54 @@ function publishQuestions() {
     questions: state.questions
   };
 
-  fetch(state.settings.gasUrl, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  }).then(function() {
-    btn.disabled = false;
-    btn.textContent = '問題をサーバーに保存する';
-    status.innerHTML = '<span style="color:var(--success);font-weight:600;">&#10003; 保存しました！受験者がアクセスできます。</span>';
-  }).catch(function(e) {
-    btn.disabled = false;
-    btn.textContent = '問題をサーバーに保存する';
-    status.innerHTML = '<span style="color:var(--danger);">保存に失敗しました。URLを確認してください。</span>';
-  });
+  // hidden iframeとformを使った確実な送信方法
+  var iframeName = 'publish_iframe_' + Date.now();
+  var iframe = document.createElement('iframe');
+  iframe.name = iframeName;
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
+
+  var form = document.createElement('form');
+  form.method = 'POST';
+  form.action = state.settings.gasUrl;
+  form.target = iframeName;
+  form.style.display = 'none';
+
+  var input = document.createElement('input');
+  input.type = 'hidden';
+  input.name = 'payload';
+  input.value = JSON.stringify(payload);
+  form.appendChild(input);
+
+  document.body.appendChild(form);
+  form.submit();
+
+  // 送信後に確認
+  setTimeout(function() {
+    // GETで保存結果を確認
+    fetch(state.settings.gasUrl + '?action=getQuestions')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        btn.disabled = false;
+        btn.textContent = '問題をサーバーに保存する';
+        if (data.questions && data.questions.length > 0) {
+          status.innerHTML = '<span style="color:var(--success);font-weight:600;">&#10003; 保存しました！（' + data.questions.length + '問）受験者がアクセスできます。</span>';
+        } else {
+          status.innerHTML = '<span style="color:var(--warning);font-weight:600;">送信しましたが、まだ反映されていません。数秒待ってからもう一度お試しください。</span>';
+        }
+      })
+      .catch(function(e) {
+        btn.disabled = false;
+        btn.textContent = '問題をサーバーに保存する';
+        status.innerHTML = '<span style="color:var(--warning);">送信しましたが確認できませんでした。数秒待ってからもう一度お試しください。</span>';
+      });
+
+    // クリーンアップ
+    try { document.body.removeChild(form); } catch(e) {}
+    setTimeout(function() {
+      try { document.body.removeChild(iframe); } catch(e) {}
+    }, 5000);
+  }, 3000);
 }
 
 // ========== LOAD EXAM FROM SERVER ==========
