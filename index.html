@@ -566,9 +566,15 @@ function generateQR() {
   container.classList.remove('hidden');
   qrEl.innerHTML = '';
 
-  var url = window.location.href.split('#')[0].split('?')[0] + '#exam';
+  var baseUrl = window.location.href.split('#')[0].split('?')[0];
+  var url;
+  if (state.settings.gasUrl) {
+    url = baseUrl + '?gas=' + encodeURIComponent(state.settings.gasUrl) + '#exam';
+  } else {
+    url = baseUrl + '#exam';
+  }
   new QRCode(qrEl, { text: url, width: 200, height: 200, colorDark: '#1e293b', colorLight: '#ffffff' });
-  document.getElementById('qr-url-display').textContent = url;
+  document.getElementById('qr-url-display').textContent = baseUrl + '#exam';
 }
 
 // ========== QUESTION MANAGEMENT ==========
