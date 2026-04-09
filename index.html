@@ -862,12 +862,36 @@ function submitExam() {
         percentage: submission.percentage,
         answers: submission.answers.map(function(a) { return a.answer; }).join('|||')
       };
-      fetch(gasUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+
+      // hidden iframeとformを使った確実な送信方法
+      var iframeName = 'submit_iframe_' + Date.now();
+      var iframe = document.createElement('iframe');
+      iframe.name = iframeName;
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+
+      var form = document.createElement('form');
+      form.method = 'POST';
+      form.action = gasUrl;
+      form.target = iframeName;
+      form.style.display = 'none';
+
+      var input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'payload';
+      input.value = JSON.stringify(payload);
+      form.appendChild(input);
+
+      document.body.appendChild(form);
+      form.submit();
+
+      // クリーンアップ
+      setTimeout(function() {
+        try { document.body.removeChild(form); } catch(e) {}
+        setTimeout(function() {
+          try { document.body.removeChild(iframe); } catch(e) {}
+        }, 5000);
+      }, 2000);
     } catch(e) {
       console.error('送信エラー:', e);
     }
